@@ -85,6 +85,9 @@ export const tmdbService = {
     });
     
     const movie = response.data;
+    const youtubeVideos = movie.videos?.results?.filter(
+      (video: any) => video.site === 'YouTube'
+    ) || [];
     return {
       ...movie,
       poster_path: getImageUrl(movie.poster_path),
@@ -96,9 +99,7 @@ export const tmdbService = {
         })),
       },
       videos: {
-        results: movie.videos.results.filter((video: any) => 
-          video.site === 'YouTube' && (video.type === 'Trailer' || video.type === 'Teaser')
-        ),
+        results: youtubeVideos,
       },
     };
   },
@@ -111,10 +112,12 @@ export const tmdbService = {
 
   // Get movie videos
   getMovieVideos: async (movieId: number): Promise<Video[]> => {
-    const response = await tmdbApi.get(`/movie/${movieId}/videos`);
-    return response.data.results.filter((video: any) => 
-      video.site === 'YouTube'
-    );
+    const response = await tmdbApi.get(`/movie/${movieId}/videos`, {
+      params: {
+        language: 'en-US'
+      }
+    });
+    return response.data.results.filter((video: any) => video.site === 'YouTube');
   },
 
   // Get similar movies

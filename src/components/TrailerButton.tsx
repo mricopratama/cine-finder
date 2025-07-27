@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Film } from 'lucide-react';
+import { Play } from 'lucide-react';
 import { tmdbService } from '../api/tmdb';
 import { Video } from '../types/movie';
 import VideoPlayer from './VideoPlayer';
@@ -11,60 +11,50 @@ interface TrailerButtonProps {
 }
 
 const TrailerButton: React.FC<TrailerButtonProps> = ({ movieId, movieTitle, className = '' }) => {
-  const [videos, setVideos] = useState<Video[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [video, setVideo] = useState<Video | null>(null);
+  const [loading, setLoading] = useState(true);
   const [showPlayer, setShowPlayer] = useState(false);
 
   useEffect(() => {
-    const fetchVideos = async () => {
+    const fetchAndSetVideo = async () => {
+      if (!movieId) return;
       setLoading(true);
       try {
-        const movieVideos = await tmdbService.getMovieVideos(movieId);
-        setVideos(movieVideos);
+        const videos = await tmdbService.getMovieVideos(movieId);
+        
+        const officialTrailer = videos.find(v => v.type === 'Trailer');
+        const teaser = videos.find(v => v.type === 'Teaser');
+        
+        setVideo(officialTrailer || teaser || videos[0] || null);
       } catch (error) {
-        console.error('Error fetching videos:', error);
+        console.error('Gagal mengambil video trailer:', error);
+        setVideo(null);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchVideos();
+    fetchAndSetVideo();
   }, [movieId]);
 
-  const trailer = videos.find(video => 
-    video.type === 'Trailer' || video.type === 'Teaser'
-  );
-
-  if (loading) {
-    return (
-      <button
-        disabled
-        className={`flex items-center space-x-2 bg-gray-600 text-gray-400 px-4 py-2 rounded-lg cursor-not-allowed ${className}`}
-      >
-        <Film className="h-5 w-5 animate-spin" />
-        <span>Loading...</span>
-      </button>
-    );
-  }
-
-  if (!trailer) {
-    return null;
+  if (loading || !video) {
+    return null; // Jangan tampilkan apa-apa jika sedang memuat atau tidak ada video
   }
 
   return (
     <>
       <button
         onClick={() => setShowPlayer(true)}
-        className={`flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-200 hover:scale-105 ${className}`}
+        className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-semibold transition-all duration-200 hover:scale-105 bg-red-600 hover:bg-red-700 text-white ${className}`}
       >
         <Play className="h-5 w-5" />
-        <span>Tonton Trailer</span>
+        <span>{video.type === 'Trailer' ? 'Tonton Trailer' : 'Tonton Video'}</span>
       </button>
 
       {showPlayer && (
         <VideoPlayer
-          videoKey={trailer.key}
-          title={`${movieTitle} - ${trailer.name}`}
+          videoKey={video.key}
+          title={`${movieTitle} - ${video.name}`}
           onClose={() => setShowPlayer(false)}
         />
       )}
