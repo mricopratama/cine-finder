@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MessageCircle, Star, User, ChevronDown, ChevronUp } from 'lucide-react';
-import { tmdbService } from '../api/tmdb';
+import { tmdbService, getImageUrl } from '../api/tmdb';
 
 interface Review {
   id: string;
@@ -111,7 +111,7 @@ const MovieReviews: React.FC<MovieReviewsProps> = ({ movieId }) => {
                 <div className="flex-shrink-0">
                   {review.author_details.avatar_path ? (
                     <img
-                      src={`https://image.tmdb.org/t/p/w64${review.author_details.avatar_path}`}
+                      src={getImageUrl(review.author_details.avatar_path, 'w64')}
                       alt={review.author}
                       className="w-12 h-12 rounded-full object-cover"
                     />
